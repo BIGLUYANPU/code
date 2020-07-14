@@ -1,0 +1,63 @@
+
+####controller层
+    @PostMapping("/export_spare_datas")
+    public void exportSpareData(@RequestBody SpareOrderModelListQuery spareOrderModelListQuery, HttpServletResponse response) {
+        try {
+            SXSSFWorkbook workbook = sparePartsService.exportExcel(spareOrderModelListQuery);
+            //文件下载
+            response.addHeader("content-disposition", "attachment;filename=" + java.net.URLEncoder.encode("peijianmingxi.xlsx", "utf-8"));
+            response.setContentType("application/force-download");
+            response.setCharacterEncoding("UTF-8");
+            OutputStream out = response.getOutputStream();
+            workbook.write(out);
+            out.flush();
+            out.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+####实现层
+//1.创建工作簿
+        SXSSFWorkbook workbook = new SXSSFWorkbook();
+        //2.创建工作表
+        SXSSFSheet sheet = workbook.createSheet("配件明细");
+        //3.创建行
+        //3.1创建头标题行;并且设置头标题
+        SXSSFRow row = sheet.createRow(0);
+        String[] titles = {};
+        if(spareOrderModelListQuery.getOrderType()!=null && spareOrderModelListQuery.getOrderType()==1){
+            titles = new String[]{"序号","配件编码","配件名称","需求数量","单价","币种","总价","配件属性","备注","VIN号","进站时间"};
+        }else{
+            titles = new String[]{"序号","配件编码","配件名称","需求数量","单价","币种","总价","配件属性","备注"};
+        }
+        // 4，创建单元格，并设置值表头 设置表头居中
+        CellStyle style = workbook.createCellStyle();
+        style.setAlignment(HorizontalAlignment.CENTER); // 创建一个居中格式
+        //表格标题行 还有格式
+        for(int n=0;n<titles.length;n++)
+        {
+            SXSSFCell cellTableTitle = row.createCell(n);
+            cellTableTitle.setCellValue(titles[n]);
+            cellTableTitle.setCellStyle(style);
+        }
+
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy/MM/dd");
+        //数字保留两位小数
+        CellStyle numberStyle = workbook.createCellStyle();
+        DataFormat dataFormat = workbook.createDataFormat();
+        numberStyle.setDataFormat(dataFormat.getFormat("#0.00"));
+        //创建内容
+        for(int i=0;i<models.size();i++){
+            row = sheet.createRow(i + 1);
+            //序号
+            SXSSFCell cellNum = row.createCell(0);
+            cellNum.setCellValue(Integer.toString());
+			
+            //总价
+            SXSSFCell cellTotalPrice = row.createCell(1);
+            cellTotalPrice.setCellStyle(numberStyle);
+            cellTotalPrice.setCellValue( models.get(i).getTotalPrice().doubleValue());
+            
+        }
+        return workbook;

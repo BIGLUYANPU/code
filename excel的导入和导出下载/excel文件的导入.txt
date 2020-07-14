@@ -1,0 +1,43 @@
+﻿
+    @PostMapping("/import_spare_data")
+    public JsonResult<List<SparePartsDataModel>> importSpareData(MultipartFile excelFile) throws IOException {
+        List<SparePartsDataModel> result = this.spareOrderModelService.importSpareData(excelFile);
+        return JsonResultUtil.createSuccessJsonResult(result);
+    }
+
+
+//实现类
+public List<SparePartsDataModel> importSpareData(MultipartFile file) throws IOException {
+	
+	Workbook workbook = null;
+	if (file.getOriginalFilename().endsWith(".xls")) {     //Excel 2003
+		workbook = new HSSFWorkbook(file.getInputStream());
+	} else if (file.getOriginalFilename().endsWith(".xlsx")) {    // Excel 2007/2010
+		workbook = new XSSFWorkbook(file.getInputStream());
+	}
+	/* 读EXCEL文字内容 */
+	// 获取第一个sheet表，也可使用sheet表名获取
+	Sheet sheet = workbook.getSheetAt(0);
+	//总行数
+	int rowLength = sheet.getLastRowNum() + 1;
+	//根据第一行，获取总列数
+	Row row = sheet.getRow(0);	
+	int colLength = row.getLastCellNum();//总列数
+	//得到指定的单元格
+	Cell cell = null;
+	Integer number = null;
+	for (int i = 1; i < rowLength; i++) {
+		//得到第一行
+		row = sheet.getRow(i);
+		//得到第一列
+		cell = row.getCell(0);
+		cell.setCellType(CellType.STRING);
+		String code = cell.getStringCellValue();
+		
+		//得到第二列
+		cell = row.getCell(1);
+		cell.setCellType(CellType.NUMERIC);
+		number = (int) cell.getNumericCellValue();
+		
+	}
+}
